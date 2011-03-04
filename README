@@ -6,7 +6,7 @@ Kopier output-nøkkelen. Eksempel: Certificate fingerprint (MD5): 71:82:16:B4:CE:
 
 Gå til: http://code.google.com/android/maps-api-signup.html, og klipp inn fingerprint.
 
-Hent ut API-Key og legg inn i "main.xml"
+Hent ut API-Key og legg inn i GoogleApiKey.xml
 
 Rolf: 0jKl5Jy1OtQ_P5X81ZPJqiHGkzexxEFiwculeyw
 Charlie: 0pzCN1-YfdyP9h6Qn8P07w1VsLhWPY3TjNXMf3w
