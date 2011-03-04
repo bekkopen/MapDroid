@@ -23,7 +23,7 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 
-public class StartActivity extends MapActivity {
+public class StartActivity extends MapActivity implements LocationListener {
     /** Called when the activity is first created. */
 	MapView mapView;
 	MapController mc;
@@ -33,7 +33,7 @@ public class StartActivity extends MapActivity {
     LocationManager locationManager;
 
     // Define a listener that responds to location updates
-    LocationListener locationListener = new LocationListener() {
+
         public void onLocationChanged(Location location) {
             Log.d("LOCATION LISTNER", "inside onLocationChanged");
         // Called when a new location is found by the network location provider.
@@ -45,7 +45,7 @@ public class StartActivity extends MapActivity {
         public void onProviderEnabled(String provider) {}
 
         public void onProviderDisabled(String provider) {}
-    };
+
 
 
 
@@ -78,8 +78,6 @@ public class StartActivity extends MapActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
@@ -87,6 +85,8 @@ public class StartActivity extends MapActivity {
         mapView.setBuiltInZoomControls(true);
 
         mapView.invalidate();
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10000, this);
     }
 
     class MapOverlay extends com.google.android.maps.Overlay {
