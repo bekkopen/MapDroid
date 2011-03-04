@@ -3,3 +3,4 @@ bin
 build.xml
 build.properties
 local.properties
+values/GoogleApiKey.xml
