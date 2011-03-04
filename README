@@ -1,2 +1,12 @@
 Repository for Android-App til fagdag mars 2011.
-Overwrite your existing debug.keystore with the debug.keystore in the 'keystore' folder to get a visible map.
+
+Generer egen key for google maps android: (keytool.exe finnes under JDK/bin-folderen)
+keytool.exe -list -alias androiddebugkey -keystore "C:\Users\rolf erik paulsen\.android\debug.keystore" -storepass android -keypass android
+Kopier output-nøkkelen. Eksempel: Certificate fingerprint (MD5): 71:82:16:B4:CE:BB:32:EE:B4:1F:03:C3:9A:79:C5:20
+
+Gå til: http://code.google.com/android/maps-api-signup.html, og klipp inn fingerprint.
+
+Hent ut API-Key og legg inn i "main.xml"
+
+Rolf: 0jKl5Jy1OtQ_P5X81ZPJqiHGkzexxEFiwculeyw
+Charlie: 0pzCN1-YfdyP9h6Qn8P07w1VsLhWPY3TjNXMf3w
