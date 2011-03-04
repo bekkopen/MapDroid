@@ -1,1 +1,2 @@
 Repository for Android-App til fagdag mars 2011.
+Overwrite your existing debug.keystore with the debug.keystore in the 'keystore' folder to get a visible map.
