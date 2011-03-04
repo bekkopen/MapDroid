@@ -1,2 +1,6 @@
 bin
 .settings
+.idea
+build.xml
+build.properties
+local.properties
