@@ -6,12 +6,12 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
-import android.util.Log;
+
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
+import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 
 import android.graphics.Bitmap;
@@ -19,8 +19,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.view.MotionEvent;
-import android.widget.Toast;
 
 
 public class StartActivity extends MapActivity implements LocationListener {
@@ -29,15 +27,15 @@ public class StartActivity extends MapActivity implements LocationListener {
 	MapController mc;
 	GeoPoint p;
     Location currentLocation;
+    MyLocationOverlay lo;
 
     LocationManager locationManager;
 
     // Define a listener that responds to location updates
 
         public void onLocationChanged(Location location) {
-            Log.d("LOCATION LISTNER", "inside onLocationChanged");
-        // Called when a new location is found by the network location provider.
-            makeUseOfNewLocation(location);
+        	 
+        	makeUseOfNewLocation(location);
         }
 
         public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -46,8 +44,31 @@ public class StartActivity extends MapActivity implements LocationListener {
 
         public void onProviderDisabled(String provider) {}
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+    	
+    	super.onCreate(savedInstanceState);
+    	setContentView(R.layout.main);
+    	initMap();
+    	initLocation();
+    }
 
-
+    private void initMap(){
+    	
+    	mapView = (MapView) findViewById(R.id.mapView);
+    	mc = mapView.getController();
+    	
+    	mapView.setBuiltInZoomControls(true);
+    	mc.setCenter(new GeoPoint((int) (63.4*1E6), (int) (10.4*1E6)));
+    	mc.setZoom(4);
+    	
+    }
+    
+    private void initLocation() {
+    	locationManager= (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+    	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+    	
+    }
 
     private void makeUseOfNewLocation(Location location) {
         this.currentLocation = location;
@@ -55,39 +76,17 @@ public class StartActivity extends MapActivity implements LocationListener {
     }
 
     private void drawMarkerForLocation(Location location) {
-        mc = mapView.getController();
-        /**
-        String coordinates[] = {"63.4", "10.4"};
-        double lat = Double.parseDouble(coordinates[0]);
-        double lng = Double.parseDouble(coordinates[1]);
-           **/
-        p = new GeoPoint((int)currentLocation.getLatitude(), (int)currentLocation.getLongitude());
+        p = new GeoPoint((int)location.getLatitude(), (int)location.getLongitude());
+        lo = new MyLocationOverlay(this, mapView);
+        lo.enableMyLocation();
 
-        mc.animateTo(p);
-        mc.setZoom(17);
-
-        //Add pin
-        MapOverlay mapOverlay = new MapOverlay();
         List<Overlay> listOfOverlays = mapView.getOverlays();
         listOfOverlays.clear();
-        listOfOverlays.add(mapOverlay);
+        listOfOverlays.add(lo);
+        mc.animateTo(p);
+        mapView.postInvalidate();
     }
 
-
-    // Register the listener with the Location Manager to receive location updates
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        mapView = (MapView) findViewById(R.id.mapView);
-        mapView.setBuiltInZoomControls(true);
-
-        mapView.invalidate();
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10000, this);
-    }
 
     class MapOverlay extends com.google.android.maps.Overlay {
 
