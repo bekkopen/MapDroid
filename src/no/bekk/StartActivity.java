@@ -1,8 +1,14 @@
 package no.bekk;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.Locale;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.location.Address;
@@ -19,10 +25,6 @@ import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,13 +35,12 @@ public class StartActivity extends MapActivity implements LocationListener {
 	MapView mapView;
 	MapController mc;
 	GeoPoint p;
-	GeoPoint torsVeg;	
     Location currentLocation;
     MyLocationOverlay lo;
     RestClient rc;
     LocationManager locationManager;
     Geocoder gc;
-
+    JSONArray jsonArray;
 
     // Define a listener that responds to location updates
 
@@ -62,15 +63,14 @@ public class StartActivity extends MapActivity implements LocationListener {
     	initMap();
     	initLocation();
     	initRestClient();
-    	initGeocoder();
-    	//Tegner to punkter
-    	initDrawing(9240000,49120000);
-    	initDrawing(19240000,-99120000);
     }
 
-    private void initDrawing(int lat, int lon) {
+    private void drawItem(int lat, int lon, String url) {
     	List<Overlay> mapOverlays = mapView.getOverlays();
-    	Drawable drawable = this.getResources().getDrawable(R.drawable.pin);
+    	Drawable drawable = LoadImageFromWebOperations(url); 
+    	if(drawable == null){
+    		drawable = this.getResources().getDrawable(R.drawable.pin);    		
+    	}
     	MyItemizedOverlay itemizedoverlay = new MyItemizedOverlay(drawable);
     	GeoPoint point = new GeoPoint(lat,lon);
     	OverlayItem overlayitem = new OverlayItem(point, "Hola, Mundo!", "I'm in Mexico City!");
@@ -80,32 +80,50 @@ public class StartActivity extends MapActivity implements LocationListener {
 
 	}
 
-	private void initGeocoder() {
+	private GeoPoint getLocationFromAddress(String address) {
     	gc = new Geocoder(this, Locale.UK);
-    	String address = "Tors veg 40 D, 7032 Trondheim";
-    	
+    	GeoPoint point = new GeoPoint(0, 0);
     	try {
-			List<Address> home = gc.getFromLocationName(address, 5);
-			if(home != null){
-				torsVeg = new GeoPoint((int)(home.get(0).getLatitude()*1E6), (int)(home.get(0).getLongitude()*1E6));
-				mc.animateTo(torsVeg);
+			List<Address> lonlatFromAddress = gc.getFromLocationName(address, 1);
+			if(lonlatFromAddress!=null && lonlatFromAddress.size()> 0){
+				point = new GeoPoint((int)(lonlatFromAddress.get(0).getLatitude()*1E6), (int)(lonlatFromAddress.get(0).getLongitude()*1E6));
 			}
 		} catch (IOException e) {
 			Log.e("TAG", "Exception i geocoder", e);
 		}
-		
+		return point;
 	}
 
 	private void initRestClient(){
     	rc = new RestClient();
     	try {
-			rc.getEmployeeList("https://intern.bekk.no/api/Employees.svc/", "intern.bekk.no", getString(R.string.BEKKUser), getString(R.string.BEKKPass));
+			jsonArray = rc.getEmployeeList("https://intern.bekk.no/api/Employees.svc/", "intern.bekk.no", getString(R.string.BEKKUser), getString(R.string.BEKKPass));
+			getLocationsAndDrawItems(jsonArray);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
-    private void initMap(){
+    private void getLocationsAndDrawItems(JSONArray employees) {
+
+    	gc = new Geocoder(this, Locale.UK);
+    	Log.i("Antall ansatte:", ""+employees.length());
+    	for(int i=0; i<employees.length(); i++){
+    		try {
+    			JSONObject employee = employees.getJSONObject(i);
+				if(employee.getString("Department").equals("Trondheim")){
+					Log.i("Trondheimskontor",employee.getString("LastName"));
+					GeoPoint empPoint = getLocationFromAddress(employee.getString("StreetAddress")+" "+employee.getString("PostalAddress"));
+					if(empPoint.getLatitudeE6()!=0 && empPoint.getLongitudeE6()!=0)
+						drawItem(empPoint.getLatitudeE6(), empPoint.getLongitudeE6(), employee.getString("ImageUrl"));
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+    	}
+	}
+
+	private void initMap(){
     	
     	mapView = (MapView) findViewById(R.id.mapView);
     	mc = mapView.getController();
@@ -138,11 +156,17 @@ public class StartActivity extends MapActivity implements LocationListener {
         mc.animateTo(p);
         mapView.postInvalidate();
     }
-    public void drawItem(double lon, double lat){
-    	p = new GeoPoint((int)lat, (int)lon);
-    	mapView.getOverlays();
-    }
 
+    private Drawable LoadImageFromWebOperations(String url){
+	    try{
+	    	InputStream is = (InputStream) new URL(url).getContent();
+	    	Drawable d = Drawable.createFromStream(is, "BEKK-ansatt");
+	    	return d;
+	    }catch (Exception e) {
+	    	System.out.println("Exc="+e);
+	    	return null;
+	    }
+    }
     @Override
     protected boolean isRouteDisplayed() {
         return false;
