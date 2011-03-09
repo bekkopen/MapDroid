@@ -1,8 +1,12 @@
 package no.bekk;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -19,6 +23,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
 
 
 public class StartActivity extends MapActivity implements LocationListener {
@@ -28,8 +33,9 @@ public class StartActivity extends MapActivity implements LocationListener {
 	GeoPoint p;
     Location currentLocation;
     MyLocationOverlay lo;
-
+    RestClient rc;
     LocationManager locationManager;
+    Geocoder gc;
 
     // Define a listener that responds to location updates
 
@@ -51,8 +57,41 @@ public class StartActivity extends MapActivity implements LocationListener {
     	setContentView(R.layout.main);
     	initMap();
     	initLocation();
+    	initRestClient();
+    	initGeocoder();
     }
 
+    private void initGeocoder() {
+    	gc = new Geocoder(this, Locale.UK);
+    	String address = "Tors veg 40 D, 7032 Trondheim";
+    	try {
+            List<Address> addresses = gc.getFromLocation(
+                    9,49, 1);
+
+			List<Address> foundAddresses = gc.getFromLocationName(address, 1);
+			Log.i("FoundAdresses",foundAddresses.toString());
+			for(int i = 0; i<foundAddresses.size(); i++){
+				Address a = foundAddresses.get(i);
+				Log.i("Lon",""+a.getLongitude());
+				Log.i("Lat",""+a.getLatitude());
+				drawItem(a.getLongitude(),a.getLatitude());
+			}
+		} catch (IOException e) {
+			Log.e("TAG", "Exception i geocoder", e);
+			drawItem(9,49);
+		}
+		
+	}
+
+	private void initRestClient(){
+    	rc = new RestClient();
+    	try {
+			rc.getEmployeeList("https://intern.bekk.no/api/Employees.svc/", "intern.bekk.no", getString(R.string.BEKKUser), getString(R.string.BEKKPass));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
     private void initMap(){
     	
     	mapView = (MapView) findViewById(R.id.mapView);
@@ -66,7 +105,7 @@ public class StartActivity extends MapActivity implements LocationListener {
     
     private void initLocation() {
     	locationManager= (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-    	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+    	locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
     	
     }
 
@@ -86,7 +125,14 @@ public class StartActivity extends MapActivity implements LocationListener {
         mc.animateTo(p);
         mapView.postInvalidate();
     }
-
+    public void drawItem(double lon, double lat){
+    	p = new GeoPoint((int)lat, (int)lon);
+    	Overlay mapOverlay = new MapOverlay();
+        List<Overlay> listOfOverlays = mapView.getOverlays();
+        listOfOverlays.clear();
+        listOfOverlays.add(mapOverlay);
+        mapView.invalidate();
+    }
 
     class MapOverlay extends com.google.android.maps.Overlay {
 
